@@ -17,3 +17,6 @@
 
 # Compiled binaries
 utt
+
+# IDE files
+nbproject/
