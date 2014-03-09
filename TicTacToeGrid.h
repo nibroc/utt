@@ -11,50 +11,12 @@ namespace utt {
 
 	template<typename Player>
 	struct TicTacToeWinCheckerSquare;
-	
-	namespace detail {
-
-		template<int v>
-		struct AreTemplateArgumentsEqualHelper {
-			typedef std::false_type value;
-		};
-
-		template<>
-		struct AreTemplateArgumentsEqualHelper<0> {
-			typedef std::true_type value;
-		};
-
-		template<int x, int y>
-		struct AreTemplateArgumentsEqual {
-			typedef typename AreTemplateArgumentsEqualHelper<x - y>::value value;
-		};
-
-		template<typename Player, bool isSquare>
-		struct TicTacToeWinCheckerSquareHelperBool;
-
-		template<typename Player>
-		struct TicTacToeWinCheckerSquareHelperBool<Player, true> {
-			typedef TicTacToeWinCheckerSquare<Player> checker;
-		};
-
-		template <typename Player, int rows, int columns> 
-		struct TicTacToeWinCheckerSquareHelper {
-			typedef typename TicTacToeWinCheckerSquareHelperBool<
-				Player, 
-				std::is_same<
-					std::integral_constant<int, rows>, 
-					std::integral_constant<int, columns>
-				>::value
-			>::checker checker;
-		};
-		
-	}
 
 	template<typename Player, 
-		int Rows = 3, int Columns = 3, 
-		typename WinChecker = typename detail::TicTacToeWinCheckerSquareHelper<
-			Player, Rows, Columns
-		>::checker
+		int Rows = 3, int Columns = 3,
+		typename WinChecker = typename std::enable_if<
+			Rows == Columns, TicTacToeWinCheckerSquare<Player>
+		>::type
 	>
 	class TicTacToeGrid {
 	public:
@@ -65,6 +27,11 @@ namespace utt {
 		
 		void claimSquare(const Player& player, int row, int column) {
 			grid[row][column].setPlayer(player);
+			auto check = checker(*this);
+			if (check.first) {
+				finished = true;
+				winner = check.second;
+			}
 		}
 
 		bool isSquareClaimed(int row, int column) const {
@@ -79,11 +46,11 @@ namespace utt {
 			return finished;
 		}
 		
-		const Player& getPlayerForSquare(int row, int column) {
+		const Player& getPlayerForSquare(int row, int column) const {
 			if (!isSquareClaimed(row, column)) {
 				throw std::runtime_error("Board does not have a player in square");
 			}
-			return grid[row][column].player;
+			return grid[row][column].getPlayer();
 		}
 
 		const Player& getWinner() const {
@@ -119,8 +86,12 @@ namespace utt {
 				return claimed;
 			}
 
-			void setPlayer(const Player& player) {
-				player = player;
+			const Player& getPlayer() const {
+				return player;
+			}
+			
+			void setPlayer(const Player& play) {
+				player = play;
 				claimed = true;
 			}
 
@@ -172,17 +143,19 @@ namespace utt {
 		
 		template<typename Grid>
 		std::pair<bool, Player> checkRows(const Grid& grid) {
-			for (int row = 0; row < grid.rows(); ++row) {
+			for (int row = 0; row < grid.getRows(); ++row) {
 				if (!grid.isSquareClaimed(row, 0)) { continue; }
 				auto player = grid.getPlayerForSquare(row, 0);
-				for (int col = 1; col < grid.cols(); ++grid) {
+				for (int col = 1; col < grid.getColumns(); ++col) {
 					if (!grid.isSquareClaimed(row, col) || grid.getPlayerForSquare(row, col) != player) {
 						break;
 					}
 				}
+				return std::make_pair(true, player);
 			}
-		
+			return std::make_pair(true, Player());
 		}
+		
 		template<typename Grid>
 		std::pair<bool, Player> checkColumns(const Grid& grid);
 		
