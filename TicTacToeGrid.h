@@ -130,13 +130,47 @@ namespace utt {
 		
 	private:
 		
-		template <typename Grid>
-		bool areAllSquaresSamePlayer(const Grid& grid, const std::vector<std::pair<int, int>>& squares) {
-			auto first = squares.front();
-			if (!grid.isSquareClaimed(first.first, first.second)) { return false; }
-			auto player = grid.getPlayerForSquare(first.first, first.second);
-			for (const auto& sq : squares) {
-				if (grid.getPlayerForSquare(sq) != player) { return false; }
+		template<typename Grid>
+		bool isColumnSamePlayer(const Grid& g, int col) {
+			if (!g.isSquareClaimed(0, col)) { return false; }
+			const auto& player = g.getPlayerForSquare(0, col);
+			for (int r = 0; r < g.getRows(); ++r) {
+				if (!g.isSquareClaimed(r, col)) { return false; }
+				if (g.getPlayerForSquare(r, col) != player) { return false; }
+			}
+			return true;
+		}
+		
+		template<typename Grid>
+		bool isRowSamePlayer(const Grid& g, int row) {
+			if (!g.isSquareClaimed(row, 0)) { return false; }
+			const auto& player = g.getPlayerForSquare(row, 0);
+			for (int c = 0; c < g.getColumns(); ++c) {
+				if (!g.isSquareClaimed(row, c)) { return false; }
+				if (g.getPlayerForSquare(row, c) != player) { return false; }
+			}
+			return true;
+		}
+		
+		template<typename Grid>
+		bool isTopLeftToBottomRightDiagonalSamePlayer(const Grid& g) {
+			if (!g.isSquareClaimed(0, 0)) { return false; }
+			const auto& player = g.getPlayerForSquare(0, 0);
+			for (int pos = 1; pos < g.getRows(); ++pos) {
+				if (!g.isSquareClaimed(pos, pos)) { return false; }
+				if (g.getPlayerForSquare(pos, pos) != player) { return false; }
+			}
+			return true;
+		}
+		
+		template<typename Grid>
+		bool isBottomLeftToTopRightDiagonalSamePlayer(const Grid& g) {
+			if (!g.isSquareClaimed(0, g.getColumns())) { return false; }
+			const auto& player = g.getPlayerForSquare(0, g.getColumns());
+			for (int row = 1; row < g.getRows(); ++row) {
+				int col = g.getColumns() - row - 1;
+				if (!g.isSquareClaimed(row, col)) { return false; }
+				if (g.getPlayerForSquare(row, col) != player) { return false; }
 			}
 			return true;
 		}
@@ -144,23 +178,33 @@ namespace utt {
 		template<typename Grid>
 		std::pair<bool, Player> checkRows(const Grid& grid) {
 			for (int row = 0; row < grid.getRows(); ++row) {
-				if (!grid.isSquareClaimed(row, 0)) { continue; }
-				auto player = grid.getPlayerForSquare(row, 0);
-				for (int col = 1; col < grid.getColumns(); ++col) {
-					if (!grid.isSquareClaimed(row, col) || grid.getPlayerForSquare(row, col) != player) {
-						break;
-					}
+				if (isRowSamePlayer(grid, row)) {
+					return std::make_pair(true, grid.getPlayerForSquare(row, 0));
 				}
-				return std::make_pair(true, player);
 			}
-			return std::make_pair(true, Player());
+			return std::make_pair(false, Player());
 		}
 		
 		template<typename Grid>
-		std::pair<bool, Player> checkColumns(const Grid& grid);
+		std::pair<bool, Player> checkColumns(const Grid& grid) {
+			for (int col = 0; col < grid.getColumns(); ++col) {
+				if (isColumnSamePlayer(grid, col)) {
+					return std::make_pair(true, grid.getPlayerForSquare(0, col));
+				}
+			}
+			return std::make_pair(false, Player());
+		}
 		
 		template<typename Grid>
-		std::pair<bool, Player> checkDiagonals(const Grid& grid);
+		std::pair<bool, Player> checkDiagonals(const Grid& grid) {
+			if (isTopLeftToBottomRightDiagonalSamePlayer(grid)) {
+				return std::make_pair(true, grid.getPlayerForSquare(0, 0));
+			}
+			if (isBottomLeftToTopRightDiagonalSamePlayer(grid)) {
+				return std::make_pair(true, grid.getPlayerForSquare(grid.getRows(), 0));
+			}
+			return std::make_pair(false, Player());
+		}
 		
 	};
 
