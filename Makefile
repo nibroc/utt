@@ -25,6 +25,9 @@ debug: CXXFLAGS+=-O0 -g -fno-omit-frame-pointer
 debug: LDFLAGS+=-g
 debug: build
 
+test: CXXFLAGS+=-O0 -g -fno-omit-frame-pointer
+test: LDFLAGS+=-g
+
 build: depend $(MAIN_OBJ) $(OBJS)
 	$(CXX) -o $(MAIN_EXE) $(MAIN_OBJ) $(OBJS) $(LDFLAGS) $(LDLIBS)
 

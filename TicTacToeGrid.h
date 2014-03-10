@@ -46,6 +46,10 @@ namespace utt {
 			return finished;
 		}
 		
+		bool isTie() const {
+			return isTie;
+		}
+		
 		const Player& getPlayerForSquare(int row, int column) const {
 			if (!isSquareClaimed(row, column)) {
 				throw std::runtime_error("Board does not have a player in square");
@@ -165,8 +169,8 @@ namespace utt {
 		
 		template<typename Grid>
 		bool isBottomLeftToTopRightDiagonalSamePlayer(const Grid& g) {
-			if (!g.isSquareClaimed(0, g.getColumns())) { return false; }
-			const auto& player = g.getPlayerForSquare(0, g.getColumns());
+			if (!g.isSquareClaimed(0, g.getColumns() - 1)) { return false; }
+			const auto& player = g.getPlayerForSquare(0, g.getColumns() - 1);
 			for (int row = 1; row < g.getRows(); ++row) {
 				int col = g.getColumns() - row - 1;
 				if (!g.isSquareClaimed(row, col)) { return false; }
@@ -201,7 +205,7 @@ namespace utt {
 				return std::make_pair(true, grid.getPlayerForSquare(0, 0));
 			}
 			if (isBottomLeftToTopRightDiagonalSamePlayer(grid)) {
-				return std::make_pair(true, grid.getPlayerForSquare(grid.getRows(), 0));
+				return std::make_pair(true, grid.getPlayerForSquare(grid.getRows() - 1, 0));
 			}
 			return std::make_pair(false, Player());
 		}
